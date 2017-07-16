@@ -1,0 +1,186 @@
+---
+title: "HousingStudy_pt3"
+author: "KAShortt"
+date: "July 9, 2017"
+output: html_document
+---
+
+
+Look at a data file on housing prices in Albuquerque at
+--> http://lib.stat.cmu.edu/DASL/Datafiles/homedat.html
+
+You should cut-and-paste the actual data to notepad and save it with the name housing.txt. You need to read in the file using the read.table function.
+For technical reasons, you want the as.is=TRUE argument. Otherwise AGE and TAX are converted to factors which causes all sorts of grief.
+There is a mix of categorical and continuous variables. Recall that you use a scatterplot to examine the relationship between two continuous variables, a crosstabls and an odds ratio to examine the relationship between two categorical variables, and a boxplot to examine the relationship between a categorical variable and a continuous variable.
+
+## R Markdown
+```{r version-and-current-date}
+R.version.string
+Sys.Date()
+```
+
+## Cleaning house
+
+```{r clean-house}
+ls()
+rm(list=ls()) # This list=ls() option removes everything
+```
+
+## use epitools
+```{r libraries}
+library("epitools")
+```
+
+## Set working directory
+```{r set-working}
+setwd("C:/Users/kathe/Documents/R class/pt 3 homework")
+```
+
+## read in dataset
+```{r read in data}
+fn <- "housing.txt"
+hp <- read.table(file=fn,header=TRUE,as.is=TRUE)
+head(hp)
+tail(hp)
+summary(hp)
+```
+
+## 1. Convert the asterisks in the TAX variable to missing. How many missing values are there for AGE and for TAX?
+
+
+```{r * to NA}
+'is.na<-'(hp, hp=="*")
+```
+
+```{r convert tax and age to numeric}
+
+hp$TAX.num<-as.numeric(hp$TAX)
+hp$AGE.num<-as.numeric(hp$AGE)
+
+```
+
+``` {r new summary}
+overall_summary <- summary(hp)
+str(overall_summary)
+write.csv(overall_summary, file="summary.csv")
+```
+
+```{r confirm no NAs}
+na_count <-sapply(hp, function(y) sum(length(which(is.na(y)))))
+data.frame(na_count)
+
+```
+
+## 2. Create factors for NE, CUST, and COR. Draw bar charts for each of these factors.
+```{r create factors}
+hp$NE.factor <- factor(hp$NE, levels=c(0,1), labels=c("not", "northeast"))
+table(hp$NE, hp$NE.factor)
+
+hp$CUST.factor <- factor(hp$CUST, levels=c(0,1), labels=c("no", "yes"))
+table(hp$CUST, hp$CUST.factor)
+
+hp$COR.factor <- factor(hp$COR, levels=c(0,1), labels=c("not", "corner"))
+table(hp$COR, hp$COR.factor)
+```
+
+```{r barplots}
+
+bmp(filename="barplot1.bmp")
+round(100*prop.table(table(hp$NE.factor)))
+barplot(100*prop.table(table(hp$NE.factor)),xlab="Location", ylab="%",axes=FALSE)
+axis(side=2,at=10*(0:5),labels=paste(10*(0:5),"%",sep=""))
+title(" ")
+dev.off()
+
+bmp(filename="barplot2.bmp")
+round(100*prop.table(table(hp$CUST.factor)))
+barplot(100*prop.table(table(hp$CUST.factor)),xlab="Custom Built", ylab="%",axes=FALSE)
+axis(side=2,at=10*(0:5),labels=paste(10*(0:5),"%",sep=""))
+title(" ")
+dev.off()
+
+bmp(filename="barplot3.bmp")
+round(100*prop.table(table(hp$COR.factor)))
+barplot(100*prop.table(table(hp$COR.factor)),xlab="Corner", ylab="%",axes=FALSE)
+axis(side=2,at=10*(0:5),labels=paste(10*(0:5),"%",sep=""))
+title(" ")
+dev.off()
+```
+
+## 3. Find the largest house (biggest SQFT) in the data set. Is the largest house also the most expensive house?
+```{r which max house}
+hp[which(hp$SQFT==3750),0]
+hp[which(hp$PRICE==2150),0]
+```
+
+## 4. Calculate frequency counts for FEATS. Are there any houses with the no features? Are there any houses with every possible feature?
+```{r freq counts}
+table(hp$FEATS)
+```
+
+## 5. Evaluate the relationship between PRICE and SQFT using a scatterplot. Include a smooth curve. Do larger houses tend to cost more?
+```{r scatter plot}
+bmp(filename="scatterplot1.bmp")
+smooth.curve <- lowess(hp$SQFT,hp$PRICE)
+plot(hp$SQFT,hp$PRICE,
+     xlab="Square Feet",
+     ylab="Price",
+     pch="+")
+title(" ")
+lines(smooth.curve)
+dev.off()
+```
+
+## 6. Evaluate the relationship between CUST and PRICE using a boxplot. Calculate the mean price and standard deviation by CUST.
+```{r}
+bmp(filename="boxplot1.bmp")
+boxplot(PRICE~CUST.factor,data=hp,xlab="Customized",ylab="Price")
+title(" ")
+dev.off()
+
+grp.means <- by(hp$PRICE,hp$CUST.factor,mean,na.rm=TRUE)
+grp.stdev <- by(hp$PRICE,hp$CUST.factor,sd,na.rm=TRUE)
+colon <- ": "
+plus.minus <- "+/-"
+paste(names(grp.means),colon,round(grp.means,1),
+      plus.minus,round(grp.stdev,1),sep="")
+```
+
+## 7. What is the difference in average prices between northeast houses and other houses? What is the difference in average taxes?
+```{r }
+grp.means <- by(hp$PRICE,hp$NE.factor,mean,na.rm=TRUE)
+grp.stdev <- by(hp$PRICE,hp$NE.factor,sd,na.rm=TRUE)
+colon <- ": "
+plus.minus <- "+/-"
+paste(names(grp.means),colon,round(grp.means,1),
+      plus.minus,round(grp.stdev,1),sep="")
+
+grp.means <- by(hp$TAX.num,hp$NE.factor,mean,na.rm=TRUE)
+grp.stdev <- by(hp$TAX.num,hp$NE.factor,sd,na.rm=TRUE)
+colon <- ": "
+plus.minus <- "+/-"
+paste(names(grp.means),colon,round(grp.means,1),
+      plus.minus,round(grp.stdev,1),sep="")
+```
+If you didnt use as.is=true whe you loaded the data, convert TAX from a factor to a numeric variable: 
+
+## 8. Are custombuilt houses more likely to appear on corner lots? Calculate the percentages and compute a relative risk.
+
+```{r }
+tb1<-table(hp$COR.factor, hp$CUST.factor)
+round(100*prop.table(tb1, margin=1))
+
+sink('CORvCUST_rr.txt')
+riskratio(hp$COR.factor, hp$CUST.factor, rev="columns")
+sink()
+```
+
+## 9. Place all the key results into a Word document, PowerPoint presentation, as a PDF file or as an HTML file. Turn it in by email. Use the subject line: "Introduction to R, (your name), Part 3 Homework"
+
+## Save everything
+```{r}
+save.image("C:/Users/kathe/Documents/R class/pt 3 homework/HOusingHomework.RData")
+```
+
+End Of File
+

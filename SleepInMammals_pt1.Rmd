@@ -1,0 +1,158 @@
+---
+title: "SleepInMammals_pt1"
+author: "KAShortt"
+date: "June 18, 2017"
+output: html_document
+---
+
+This purpose of this program is to complete the analysis of a "Sleep in Mammals" data set for Intro to R assignment 1.  Data description is available at http://www.statsci.org/data/general/sleep.html and data is available at http://www.statsci.org/data/general/sleep.txt.
+
+
+
+## R Markdown
+```{r version-and-current-date}
+R.version.string
+Sys.Date()
+```
+
+## Cleaning house
+
+```{r clean-house}
+ls()
+rm(list=ls()) # This list=ls() option removes everything
+```
+
+## Set working directory
+
+```{r set-working}
+setwd("C:/Users/kathe/Documents/R class/pt1 homework")
+```
+
+## 1. Notice that there is a huge range in body weight. Display the information for the smallest and the largest mammals.
+
+To answer this, read in the data and look at the min and max values in bodywt.
+
+
+```{r read-summary}
+fn <- "C:/Users/kathe/Documents/R class/pt1 homework/sleep.txt"
+fd <- read.table(file=fn,header=TRUE,row.names=1)
+head(fd)
+tail(fd)
+overall_summary <- summary(fd)
+str(overall_summary)
+write.csv(overall_summary, file="summary.csv")
+```
+Then determin which species correcpond with the min and max values
+
+```{r min-max-BodyWt}
+fd[which(fd$BodyWt==0.005),0]
+fd[which(fd$BodyWt==6654.000),0]
+```
+
+## 2. Which variables have missing data?
+
+here, just look at the NAs in the summary.
+
+## 3. Calculate the mean and standard deviation for TotalSleep.
+
+```{r TotalSleep}
+mean(fd$TotalSleep,na.rm=TRUE)
+sd(fd$TotalSleep,na.rm=TRUE)
+```
+
+## 4. Draw a histogram for the BodyWt variable. Note that this variable is highly skewed. Re-draw the histogram on the log scale. Hint: log(sl$BodyWt,base=10). For exta credit, relabel the axes with values at 0.001, 0.01, etc.
+
+```{r histogram}
+bmp(filename="histogram1.bmp")
+hist(fd$BodyWt)
+dev.off()
+```
+Plot the log10 transformed data
+
+```{r histogram-modified}
+
+d1 <- log(fd$BodyWt,base=10)
+bmp(filename="histogram2.bmp")
+hist(d1,main=" ",breaks=c(-3,-2,-1,0,1,2,3,4),xlab="Body Weight in kg",axes=FALSE)
+lb <- c("0.001","0.01","0.1","1","10","100","1,000","10,000")
+axis(side=1,at=c(-3,-2,-1,0,1,2,3,4),labels=lb)
+axis(side=2,at=5*(0:5))
+dev.off()
+```
+
+## 5. Calculate the ratio of BrainWt to BodyWt and express it as a percentage. Be sure to convert grams to kilograms (or vice versa) before computing the ratio. What animal has the smallest/largest ratio?
+
+```{r BrainWt-vs-BodyWt}
+d2<-c(fd$Species,100*(fd$BrainWt/(1000*fd$BodyWt)))
+summary(d2)
+which.min(d2)
+which.max(d2)
+
+```
+
+
+determine teh species which ahve the min and max ratios
+
+```{r min-max-ratio}
+fd[1,]
+fd[27,]
+```
+
+## 6. Do bigger animals sleep longer or live longer? Show your results using a correlation coefficient.
+
+```{r sleep-vs-live}
+SleepLife.measures<-c("TotalSleep","NonDreaming","Dreaming","LifeSpan")
+round(100*cor(fd[,"BodyWt"],fd[,SleepLife.measures],use="pairwise.complete.obs"))
+```
+
+## 7. Do animals who have high degrees of Predation, Exposure, or Danger sleep less? Show your results using a plot and a trendline.
+
+Correlation between valriables
+```{r stress-vs-sleep}
+stress.measures<-c("Predation","Exposure","Danger")
+sleep.measures<-c("TotalSleep","NonDreaming","Dreaming")
+round(100*cor(fd[,stress.measures],fd[,sleep.measures],use="pairwise.complete.obs"))
+```
+
+Plot the data and add a trend line
+
+```{r scatter-plots}
+bmp(filename="scatterplot1.bmp")
+trend.line <- lm(TotalSleep~Predation,data=fd)
+plot(fd$Predation,fd$TotalSleep,
+     xlab="Predation Index",
+     ylab="Total Sleep in Hrs/Day",
+     pch="+")
+title(" ")
+abline(trend.line)
+dev.off()
+
+bmp(filename="scatterplot2.bmp")
+trend.line <- lm(TotalSleep~Exposure,data=fd)
+plot(fd$Exposure,fd$TotalSleep,
+     xlab="Exposure",
+     ylab="Total Sleep in Hrs/Day",
+     pch="+")
+title(" ")
+abline(trend.line)
+dev.off()
+
+bmp(filename="scatterplot3.bmp")
+trend.line <- lm(TotalSleep~Danger,data=fd)
+plot(fd$Danger,fd$TotalSleep,
+     xlab="Danger",
+     ylab="Total Sleep in Hrs/Day",
+     pch="+")
+title(" ")
+abline(trend.line)
+dev.off()
+```
+
+## 8. Place all the key results into a Word document or PowerPoint presentation, or as a PDF file or as an HTML file. Turn it in by email. Use the subject line: "Introduction to R, (your name), Part 1 Homework"
+
+## Save everything
+```{r}
+save.image("C:/Users/kathe/Documents/R class/pt1 homework/SleepHomework.RData")
+```
+
+End Of File
