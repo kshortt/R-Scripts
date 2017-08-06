@@ -1,0 +1,161 @@
+---
+title: "DiabetesStudy_pt5"
+author: "KAShortt"
+date: "July 23, 2017"
+output: html_document
+---
+
+The final project will analyze a diabetes dataset available courtesy of Dr John Schorling, Department of Medicine, University of Virginia School of Medicine.
+	dataset information: http://biostat.mc.vanderbilt.edu/wiki/pub/Main/DataSets/diabetes.html
+	variable information: http://biostat.mc.vanderbilt.edu/wiki/pub/Main/DataSets/Cdiabetes.html
+	data: http://biostat.mc.vanderbilt.edu/wiki/pub/Main/DataSets/diabetes.xls
+
+## R Markdown
+```{r version-and-current-date}
+R.version.string
+Sys.Date()
+```
+
+## Cleaning house
+
+```{r clean-house}
+ls()
+rm(list=ls()) # This list=ls() option removes everything
+```
+
+## use epitools
+```{r libraries}
+library("epitools")
+library("readxl")
+```
+
+## Set working directory
+```{r set-working}
+setwd("C:/Users/kathe/Documents/R class/pt 5 final project")
+```
+
+## 1. Compute some summary statistics. Are there any missing values?
+
+## read dataset
+```{r read data}
+dm <- read_excel("diabetes.xls")
+head(dm)
+tail(dm)
+```
+
+## summary statistics
+```{r summary}
+overall_summary <- summary(dm)
+str(overall_summary)
+write.csv(overall_summary, file="summary.csv")
+```
+
+## confirm NAs
+```{r confirm NAs}
+na_count <-sapply(dm, function(y) sum(length(which(is.na(y)))))
+data.frame(na_count)
+
+```
+
+## 2. Create a factor for at least one categorical variable.
+```{r create binary factor for glycolosolated hemoglobin}
+
+## Glycosolated hemoglobin > 7 consistent with diabetes mellitus
+dm$glyhb.num <- as.numeric(dm$glyhb>7)
+dm$glyhb.factor <- factor(dm$glyhb.num, levels=c(0,1), labels=c("normal","high"))
+
+## check coding                         
+table(dm$glyhb, dm$glyhb.num)
+table(dm$glyhb.num,dm$glyhb.factor)
+```
+
+## 3. Draw at least one graph appropriate for your data.
+```{r barplot}
+
+bmp(filename="barplot1.bmp")
+round(100*prop.table(table(dm$glyhb.factor)))
+barplot(100*prop.table(table(dm$glyhb.factor)),xlab="Glycosolated hemoglobin", ylab="%",axes=FALSE)
+axis(side=2,at=10*(0:10),labels=paste(10*(0:10),"%",sep=""))
+title(" ")
+dev.off()
+```
+
+## 4. Calculate a correlation or an odds ratio (or both) depending on what type of data you have.
+```{r correlation}
+bio.measures<-c("chol", "hdl", "stab.glu", "glyhb")
+phys.measures<-c("age", "height", "weight", "waist", "hip")
+round(100*cor(dm[,bio.measures],dm[,phys.measures],use="pairwise.complete.obs"))
+```
+
+```{r correlation}
+bio.measures<-c("chol", "hdl", "stab.glu")
+round(100*cor(dm$glyhb,dm[,bio.measures],use="pairwise.complete.obs"))
+```
+
+## 5. Produce at least two other statistics or graphs that you think might be interesting and informative.
+```{r remove NAs}
+# select variables glyhb, stab.glu
+myvars <- c("glyhb","stab.glu")
+dm2 <- dm[myvars]
+
+dm3 <- na.omit(dm2)
+
+summary(dm3)
+```
+
+```{r scatter plot}
+bmp(filename="scatterplot1.bmp")
+smooth.curve <- lowess(dm3$glyhb, dm3$stab.glu)
+plot(dm$glyhb,dm$stab.glu,
+     xlab="Glycosolated Hemoglobin",
+     ylab="Stable Glucose",
+     pch="+")
+title(" ")
+lines(smooth.curve)
+dev.off()
+```
+
+```{r }
+## stab.glu by gender
+grp.means <- by(dm$stab.glu,dm$gender,mean,na.rm=TRUE)
+grp.stdev <- by(dm$stab.glu,dm$gender,sd,na.rm=TRUE)
+colon <- ": "
+plus.minus <- "+/-"
+paste(names(grp.means),colon,round(grp.means,1),
+      plus.minus,round(grp.stdev,1),sep="")
+
+## stab.glu by location
+grp.means2 <- by(dm$stab.glu,dm$location,mean,na.rm=TRUE)
+grp.stdev2 <- by(dm$stab.glu,dm$location,sd,na.rm=TRUE)
+colon <- ": "
+plus.minus <- "+/-"
+paste(names(grp.means2),colon,round(grp.means2,1),
+      plus.minus,round(grp.stdev2,1),sep="")
+
+## glyhb by gender
+grp.means3 <- by(dm$glyhb,dm$gender,mean,na.rm=TRUE)
+grp.stdev3 <- by(dm$glyhb,dm$gender,sd,na.rm=TRUE)
+colon <- ": "
+plus.minus <- "+/-"
+paste(names(grp.means3),colon,round(grp.means3,1),
+      plus.minus,round(grp.stdev3,1),sep="")
+
+## glyhb by location
+grp.means4 <- by(dm$glyhb,dm$location,mean,na.rm=TRUE)
+grp.stdev4 <- by(dm$glyhb,dm$location,sd,na.rm=TRUE)
+colon <- ": "
+plus.minus <- "+/-"
+paste(names(grp.means4),colon,round(grp.means4,1),
+      plus.minus,round(grp.stdev4,1),sep="")
+```
+
+## 6. Place all the key results into a Word document, PowerPoint presentation, as a PDF file or as an HTML file. Turn it in by email. Provide a brief interpretation in the context of your data set for everything that you produce above.
+
+## Save everything
+```{r}
+save.image("C:/Users/kathe/Documents/R class/pt 5 final project/DM.RData")
+```
+
+
+End Of File
+
